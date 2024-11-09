@@ -309,9 +309,11 @@ message( paste0( {col_green(symbol$tick)},  "  Generated ", nrow( event_tbl ), "
 dir.create( "work", showWarnings = FALSE )
 
 wildcast_network <- 
-	list(	port_source = 	port_source_tbl,
+	list(	ports 		=	port_list,
+			products		=	product_list,
+			dates 		= 	date_list, 
+		  	port_source = 	port_source_tbl,
 		  	port_dest 	= 	port_dest_tbl,
-		  	events 		= 	event_tbl,
-			dates 		= 	date_list )
+		  	events 		= 	event_tbl )
 
 saveRDS( wildcast_network, "work/wildcast_network.rds" )

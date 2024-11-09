@@ -24,6 +24,17 @@
       ],
       "Hash": "065ae649b05f1ff66bb0c793107508f5"
     },
+    "KernSmooth": {
+      "Package": "KernSmooth",
+      "Version": "2.23-24",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "R",
+        "stats"
+      ],
+      "Hash": "9f33a1ee37bbe8919eb2ec4b9f2473a5"
+    },
     "MASS": {
       "Package": "MASS",
       "Version": "7.3-61",
@@ -75,6 +86,17 @@
         "R"
       ],
       "Hash": "45f0398006e83a5b10b72a90663d8d8c"
+    },
+    "Rcpp": {
+      "Package": "Rcpp",
+      "Version": "1.0.13-1",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "methods",
+        "utils"
+      ],
+      "Hash": "6b868847b365672d6c1677b1608da9ed"
     },
     "askpass": {
       "Package": "askpass",
@@ -219,6 +241,35 @@
         "tibble"
       ],
       "Hash": "f61dbaec772ccd2e17705c1e872e9e7c"
+    },
+    "class": {
+      "Package": "class",
+      "Version": "7.3-22",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "MASS",
+        "R",
+        "stats",
+        "utils"
+      ],
+      "Hash": "f91f6b29f38b8c280f2b9477787d4bb2"
+    },
+    "classInt": {
+      "Package": "classInt",
+      "Version": "0.4-10",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "KernSmooth",
+        "R",
+        "class",
+        "e1071",
+        "grDevices",
+        "graphics",
+        "stats"
+      ],
+      "Hash": "f5a40793b1ae463a7ffb3902a95bf864"
     },
     "cli": {
       "Package": "cli",
@@ -409,6 +460,22 @@
       ],
       "Hash": "54ed3ea01b11e81a86544faaecfef8e2"
     },
+    "e1071": {
+      "Package": "e1071",
+      "Version": "1.7-16",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "class",
+        "grDevices",
+        "graphics",
+        "methods",
+        "proxy",
+        "stats",
+        "utils"
+      ],
+      "Hash": "27a09ca40266a1066d62ef5402dd51d6"
+    },
     "evaluate": {
       "Package": "evaluate",
       "Version": "1.0.1",
@@ -516,6 +583,29 @@
         "methods"
       ],
       "Hash": "15e9634c0fcd294799e9b2e929ed1b86"
+    },
+    "gganimate": {
+      "Package": "gganimate",
+      "Version": "1.0.9",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "cli",
+        "ggplot2",
+        "glue",
+        "grDevices",
+        "grid",
+        "lifecycle",
+        "progress",
+        "rlang",
+        "scales",
+        "stringi",
+        "transformr",
+        "tweenr",
+        "utils",
+        "vctrs"
+      ],
+      "Hash": "c6e8a7ff1b78529309cb2186ec1e3d38"
     },
     "ggplot2": {
       "Package": "ggplot2",
@@ -832,6 +922,13 @@
       ],
       "Hash": "b8552d117e1b808b09a832f589b79035"
     },
+    "lpSolve": {
+      "Package": "lpSolve",
+      "Version": "5.6.22",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "bd62ebb5bdc0cbf55ea6da593a4475ed"
+    },
     "lubridate": {
       "Package": "lubridate",
       "Version": "1.9.3",
@@ -1009,6 +1106,18 @@
         "prettyunits"
       ],
       "Hash": "f4625e061cb2865f111b47ff163a5ca6"
+    },
+    "proxy": {
+      "Package": "proxy",
+      "Version": "0.4-27",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "R",
+        "stats",
+        "utils"
+      ],
+      "Hash": "e0ef355c12942cf7a6b91a6cfaea8b3e"
     },
     "ps": {
       "Package": "ps",
@@ -1204,6 +1313,18 @@
       ],
       "Hash": "0bcf0c6f274e90ea314b812a6d19a519"
     },
+    "s2": {
+      "Package": "s2",
+      "Version": "1.1.7",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "R",
+        "Rcpp",
+        "wk"
+      ],
+      "Hash": "3c8013cdd7f1d20de5762e3f97e5e274"
+    },
     "sass": {
       "Package": "sass",
       "Version": "0.4.9",
@@ -1250,6 +1371,29 @@
         "stringr"
       ],
       "Hash": "3838071b66e0c566d55cc26bd6e27bf4"
+    },
+    "sf": {
+      "Package": "sf",
+      "Version": "1.0-19",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "DBI",
+        "R",
+        "Rcpp",
+        "classInt",
+        "grDevices",
+        "graphics",
+        "grid",
+        "magrittr",
+        "methods",
+        "s2",
+        "stats",
+        "tools",
+        "units",
+        "utils"
+      ],
+      "Hash": "fe02eec2f6b3ba0e24afe83d5ccfb528"
     },
     "showtext": {
       "Package": "showtext",
@@ -1462,6 +1606,36 @@
       ],
       "Hash": "3ec7e3ddcacc2d34a9046941222bf94d"
     },
+    "transformr": {
+      "Package": "transformr",
+      "Version": "0.1.5",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "cpp11",
+        "lpSolve",
+        "rlang",
+        "sf",
+        "tweenr",
+        "vctrs"
+      ],
+      "Hash": "584eda9966ed571b3adc75e338116147"
+    },
+    "tweenr": {
+      "Package": "tweenr",
+      "Version": "2.0.3",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "R",
+        "cpp11",
+        "farver",
+        "magrittr",
+        "rlang",
+        "vctrs"
+      ],
+      "Hash": "82fac2b73e6a1f3874fc000aaf96d8bc"
+    },
     "tzdb": {
       "Package": "tzdb",
       "Version": "0.4.0",
@@ -1472,6 +1646,17 @@
         "cpp11"
       ],
       "Hash": "f561504ec2897f4d46f0c7657e488ae1"
+    },
+    "units": {
+      "Package": "units",
+      "Version": "0.8-5",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "R",
+        "Rcpp"
+      ],
+      "Hash": "119d19da480e873f72241ff6962ffd83"
     },
     "utf8": {
       "Package": "utf8",
@@ -1554,6 +1739,16 @@
         "graphics"
       ],
       "Hash": "cc2d62c76458d425210d1eb1478b30b4"
+    },
+    "wk": {
+      "Package": "wk",
+      "Version": "0.9.4",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "R"
+      ],
+      "Hash": "37be35d733130f1de1ef51672cf7cdc0"
     },
     "xfun": {
       "Package": "xfun",

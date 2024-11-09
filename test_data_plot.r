@@ -8,6 +8,8 @@ library( showtext )
 
 library( scales ) # Improve scales for output plot
 
+library( gganimate ) # Animate time series plots
+
 library( grimoire ) # devtools::install_github( "weirddatascience/grimoire" )
 
 library( cli ) # For message colouring and progress bars
@@ -21,6 +23,7 @@ wildcast_network <- readRDS( "work/wildcast_network.rds" )
 # Extract the list components to individual elements
 event_tbl <- wildcast_network$events
 date_list <- wildcast_network$dates
+port_list <- wildcast_network$ports
 
 # Fonts for plotting
 font_add_google( name="Jost", family="main" )
@@ -108,3 +111,29 @@ dir.create( "output", showWarnings = FALSE )
 ggsave( shipment_events_port_source_plot, file="output/shipment_events_port_source_plot.pdf", width=16, height=9 )
 ggsave( shipment_events_port_source_observed_plot, file="output/shipment_events_port_source_observed_plot.pdf", width=16, height=9 )
 ggsave( shipment_events_port_source_combined_plot, file="output/shipment_events_port_source_combined_plot.pdf", width=16, height=9 )
+
+# Animated version of time series events for single port
+
+# Choose a port and restrict to only that time series
+shipment_events_port_source_single <-
+	shipment_events_port_source %>%
+	filter( port_source == head( port_list, 1 ) )
+
+# Example time series animation
+shipment_events_port_source_animation <-
+	ggplot( shipment_events_port_source_single ) +
+	geom_line( aes( x=date, y=n ), colour=weird_colours[["carcosa yellow"]] ) +
+	scale_y_continuous( breaks=integer_breaks(), limits=c(0,NA) ) +	# Ensure integers on the y axis and include 0
+	labs( x="Date", y="Shipment count", colour="Source Port" ) + 
+	ggtitle( "Generated Shipment Time Series" ) +
+	theme_weird() + 
+	theme( axis.title.y = element_text( angle=90 ) ) +
+	transition_reveal( date )
+
+animate( shipment_events_port_source_animation, 
+		  	width = 1200,
+		  	height = 720,
+		  	renderer = gifski_renderer( loop = FALSE ) )
+
+
+
