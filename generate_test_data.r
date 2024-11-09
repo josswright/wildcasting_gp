@@ -4,6 +4,8 @@ library( tidyverse )
 library( purrr )
 library( lubridate )
 
+library( scales ) # Improve scales for output plot
+
 library( grimoire ) # devtools::install_github( "weirddatascience/grimoire" )
 
 library( cli ) # For message colouring and progress bars
@@ -31,8 +33,8 @@ n_dest <- 5
 # p_ship_detect 	- Probability that a shipment is detected at source. 
 # p_dest_detect 	- Probability that a shipment is detected at destination.
 
-p_shipment_size <- 0.2
-p_shipment_prob <- 0.8
+p_shipment_size <- 0.04
+p_shipment_prob <- 0.2
 
 p_source_detect <- 0.05
 p_dest_detect <- 0.05
@@ -316,16 +318,81 @@ wildcast_network <-
 
 saveRDS( wildcast_network, "work/wildcast_network.rds" )
 
-# Create an example time series plot of shipments
+# Create example time series plots of shipments.
+
+# Function for plotting only integer y-axis values.
+integer_breaks <- function( n = 5, ...) {
+    breaks_floor <- function(x) {
+        breaks <- floor( pretty( x, n, ...) )
+        names( breaks ) <- attr( breaks, "labels" )
+        return( breaks )
+    }
+    return( breaks_floor )
+}
+
+# Tally shipment counts (daily)
+# Use complete to ensure that there is an entry for each day for each port.
 event_source_port_shipments <-
 	event_tbl %>%
 	group_by( date, port_source ) %>%
-	tally() 
+	tally() %>%
+	ungroup %>%
+	complete( date=date_list ) %>%
+	complete( date, port_source, fill=list( n=0 ) ) %>%
+	filter( !is.na( port_source ) ) 
 
+# Plot the data for all shipments
 shipment_event_plot <-
 	ggplot( event_source_port_shipments ) +
-	geom_point( aes( x=date, y=n, colour=port_source ) ) +
-	labs( x="Date", y="Shipment count", colour="Source Port" ) +
+	geom_line( aes( x=date, y=n, colour=port_source ) ) +
+	scale_y_continuous( breaks=integer_breaks(), limits=c(0,NA) ) +	# Ensure integers on the y axis and include 0
+	facet_wrap( vars( port_source ), ncol=1, scales="fixed" ) + # Facet per port
+	labs( x="Date", y="Shipment count", colour="Source Port" ) + 
 	ggtitle( "Generated Shipment Time Series" ) +
 	theme_weird() + 
 	theme( axis.title.y = element_text( angle=90 ) )
+
+# Plot the data for only observed shipments at destination ports
+event_source_port_shipments_observed <-
+	event_tbl %>%
+	filter( detected_destination == 1 ) %>%
+	group_by( date, port_source ) %>%
+	tally() %>%
+	ungroup %>%
+	complete( date=date_list ) %>%
+	complete( date, port_source, fill=list( n=0 ) ) %>%
+	filter( !is.na( port_source ) ) 
+
+shipment_event_observed_plot <-
+	ggplot( event_source_port_shipments_observed ) +
+	geom_line( aes( x=date, y=n, colour=port_source ) ) +
+	scale_y_continuous( breaks=integer_breaks(), limits=c(0,NA) ) +	# Ensure integers on the y axis and include 0
+	facet_wrap( vars( port_source ), ncol=1, scales="fixed" ) + # Facet per port
+	labs( x="Date", y="Shipment count", colour="Source Port" ) + 
+	ggtitle( "Generated Shipment Time Series" ) +
+	theme_weird() + 
+	theme( axis.title.y = element_text( angle=90 ) )
+
+# Combined version of the two datasets
+shipment_events_combined <-
+	event_source_port_shipments %>%
+	left_join( event_source_port_shipments_observed, by=c( "date", "port_source" ) ) %>% 
+	rename( n = n.x, n_observed = n.y ) %>%
+	replace_na( list( n_observed=0 ) ) %>% # Replace missing observed values with 0
+	pivot_longer( cols=c( n, n_observed ), names_to="event_type" ) # Pivot to longer table for plotting
+
+# Plot the two series against each other
+shipment_events_combined_plot <-
+	ggplot( shipment_events_combined ) +
+	geom_line( aes( x=date, y=value, colour=event_type ) ) +
+	scale_colour_manual( values=c( weird_colours[["midnight blue"]], weird_colours[["carcosa yellow"]] ),
+							  	breaks=c( "n", "n_observed" ),
+								labels=c( "Shipment", "Observed Shipment" ) ) +
+	scale_y_continuous( breaks=integer_breaks(), limits=c(0,NA) ) +	# Ensure integers on the y axis and include 0
+	facet_wrap( vars( port_source ), ncol=1, scales="fixed" ) + # Facet per port
+	labs( x="Date", y="Shipment count", colour="Source Port" ) + 
+	ggtitle( "Generated Shipment Time Series" ) +
+	theme_weird() + 
+	theme( axis.title.y = element_text( angle=90 ) )
+
+

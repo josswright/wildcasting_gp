@@ -22,7 +22,7 @@ port,prefix,Eldritch
 port,prefix,Fainting
 port,prefix,Foetid
 port,prefix,Forbidden
-port,prefix,Fungoid
+port,prefix,Fungal
 port,prefix,Furtive
 port,prefix,Gibbous
 port,prefix,Gibbering
@@ -185,6 +185,7 @@ product,prefix,Greater
 product,prefix,Dishevelled
 product,prefix,Shrivelled
 product,prefix,Foetid
+product,prefix,Fungal
 product,prefix,Distilled
 product,prefix,Preserved
 product,prefix,Fresh
