@@ -1,4 +1,5 @@
 library( tidyverse )
+library( purrr )
 library( lubridate )
 
 # Generate a set of sporadic observations from a known underlying process.
@@ -143,19 +144,15 @@ port_dest_tbl <-
 # following form: date, port_source, port_destination, product, quantity,
 # detected_source, detected_destination
 
-# The dates of interest
-date_list <-
-	seq( ymd( "1900-01-01" ), ymd("1919-12-31"), by="day" )
-
 # Function to take a single source port entry row and generate a shipment
 # event, as described in the previous comment.
-generate_event <- function( event_date, source_row, port_dest_tbl ) {
+generate_event <- function( name, product, probability, event_date, port_dest_tbl ) {
 
 	# A row to store the event if it occurs
 	event_row <- NULL
 
-	event_product <- pull( source_row, product )
-	event_probability <- pull( source_row, probability )
+	event_product <- product
+	event_probability <- 0.5
 
 	# If the shipment occurred, work out the details.
 	if( rbinom( 1, size=1, prob=event_probability )==1 ) {
@@ -177,9 +174,9 @@ generate_event <- function( event_date, source_row, port_dest_tbl ) {
 		# Construct the result row
 		event_row <-
 			tibble_row( date=event_date, 
-						  	port_source=pull( source_row, name ), 
+						  	port_source=name,
 							port_destination=event_destination,
-							product=event_product,
+							product=product,
 							quantity=sample( 1:10, 1 ),		# Fixed for now. Should be defined in product tbl.
 							detected_source=detected_source,
 							detected_destination=detected_destination )
@@ -190,7 +187,30 @@ generate_event <- function( event_date, source_row, port_dest_tbl ) {
 
 }
 
+# The dates of interest
+date_list <-
+	seq( ymd( "1900-01-01" ), ymd("1900-12-31"), by="day" )
+
 # Step through the dates and generate a tibble of trade events
 event_list <- NULL
-#for( event_date in date_list ) {
+for( event_date in date_list ) {
 
+	event_date <- as.Date( event_date )
+
+	message( paste0( "Generating events for: ", event_date ) )
+
+	# Generate the day's events
+	daily_event <-
+		pmap( port_source_tbl, generate_event, event_date=event_date, port_dest_tbl=port_dest_tbl ) %>%
+		bind_rows
+
+	# Add the day's events to the overall list
+	event_list <- 
+		event_list %>%
+		bind_rows( daily_event )
+
+}
+
+# Save the event list
+dir.create( "work", showWarnings = FALSE )
+saveRDS( event_list, "work/event_list.rds" )
