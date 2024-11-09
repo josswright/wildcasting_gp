@@ -4,6 +4,8 @@ library( tidyverse )
 library( purrr )
 library( lubridate )
 
+library( showtext )
+
 library( scales ) # Improve scales for output plot
 
 library( grimoire ) # devtools::install_github( "weirddatascience/grimoire" )
@@ -11,6 +13,10 @@ library( grimoire ) # devtools::install_github( "weirddatascience/grimoire" )
 library( cli ) # For message colouring and progress bars
 
 })
+
+# Fonts for plotting
+font_add_google( name="Jost", family="main" )
+showtext_auto()
 
 # Generate a set of sporadic observations for trade between randomised ports,
 # for various products, from a known underlying process.
@@ -25,7 +31,6 @@ n_ports <- 12
 n_products <- 12
 n_source <- 5
 n_dest <- 5
-
 
 # Shipment Parameters
 # p_shipment_size	- Size parameter for negative binomial shipment random draw. (rnbinom())
@@ -50,17 +55,19 @@ if (Sys.info()["sysname"] == "Windows") {
 }
 
 # Report start of processing
+msg_width <- 56
+value_width <- 8
 message( col_blue( "Wildcasting Trade Network Simulator" ) )
 message( paste0( {col_green(symbol$play)},  "  Generating trade network and events." ) )
 message( paste0( {col_green(symbol$play)},  "  Requested parameters:" ) )
-message( paste0( "   ", {col_yellow(symbol$bullet)},  n_ports, " ports." ) )
-message( paste0( "   ", {col_yellow(symbol$bullet)},  n_ports, " products." ) )
-message( paste0( "   ", {col_yellow(symbol$bullet)},  "Up to ", n_source, " products produced at each port." ) )
-message( paste0( "   ", {col_yellow(symbol$bullet)},  "Up to ", n_dest, " products accepted at each port." ) )
-message( paste0( "   ", {col_yellow(symbol$bullet)},  "Size parameter for shipments: ", p_shipment_size ) )
-message( paste0( "   ", {col_yellow(symbol$bullet)},  "Probability parameter for shipments: ", p_shipment_prob ) )
-message( paste0( "   ", {col_yellow(symbol$bullet)},  "Probability of shipment detection at source: ", p_source_detect ) )
-message( paste0( "   ", {col_yellow(symbol$bullet)},  "Probability of shipment detection at destination: ", p_source_detect ) )
+message( paste( str_pad( paste( "  ", {col_yellow(symbol$bullet)},  "Ports:" ), msg_width, side="right" ), str_pad( n_ports, value_width, side="left" ) ) )
+message( paste( str_pad( paste( "  ", {col_yellow(symbol$bullet)},  "Products:" ), msg_width, side="right" ), str_pad( n_products, value_width, side="left" ) ) )
+message( paste( str_pad( paste( "  ", {col_yellow(symbol$bullet)},  "Port production limit:" ), msg_width, side="right" ), str_pad( n_source, value_width, side="left" ) ) )
+message( paste( str_pad( paste( "  ", {col_yellow(symbol$bullet)},  "Port acceptance limit:" ), msg_width, side="right" ), str_pad( n_dest, value_width, side="left" ) ) )
+message( paste( str_pad( paste( "  ", {col_yellow(symbol$bullet)},  "Shipment size parameter:" ), msg_width, side="right" ), str_pad( p_shipment_size, value_width, side="left" ) ) )
+message( paste( str_pad( paste( "  ", {col_yellow(symbol$bullet)},  "Shipment probability parameter:" ), msg_width, side="right" ), str_pad( p_shipment_prob, value_width, side="left" ) ) )
+message( paste( str_pad( paste( "  ", {col_yellow(symbol$bullet)},  "Shipment source detection probability:" ), msg_width, side="right" ), str_pad( p_source_detect, value_width, side="left" ) ) )
+message( paste( str_pad( paste( "  ", {col_yellow(symbol$bullet)},  "Shipment destination detection probability:" ), msg_width, side="right" ), str_pad( p_dest_detect, value_width, side="left" ) ) )
 message( )
 
 
@@ -133,7 +140,7 @@ message( )
 # destination port that desires that product.
 
 # The network structure will be a dataframe in the following form:
-# source port, destination port, product, p_shipment
+# source port, destination port, product
 
 # Generate the data frames of ports.
 # One contains all ports and the products they ship, and the probability of a shipment.
@@ -162,7 +169,7 @@ for( i in 1:n_ports ) {
 	# Generate table entries produced here
 	for( source_product in source_product_list ) {
 		port_source_tbl <- 
-			bind_rows( port_source_tbl, tibble( name=name, product=source_product, probability=p_shipment ) )
+			bind_rows( port_source_tbl, tibble( name=name, product=source_product ) )
 	}
 
 	# Generate table entries consumed here
@@ -332,7 +339,7 @@ integer_breaks <- function( n = 5, ...) {
 
 # Tally shipment counts (daily)
 # Use complete to ensure that there is an entry for each day for each port.
-event_source_port_shipments <-
+shipment_events_port_source <-
 	event_tbl %>%
 	group_by( date, port_source ) %>%
 	tally() %>%
@@ -342,8 +349,8 @@ event_source_port_shipments <-
 	filter( !is.na( port_source ) ) 
 
 # Plot the data for all shipments
-shipment_event_plot <-
-	ggplot( event_source_port_shipments ) +
+shipment_events_port_source_plot <-
+	ggplot( shipment_events_port_source ) +
 	geom_line( aes( x=date, y=n, colour=port_source ) ) +
 	scale_y_continuous( breaks=integer_breaks(), limits=c(0,NA) ) +	# Ensure integers on the y axis and include 0
 	facet_wrap( vars( port_source ), ncol=1, scales="fixed" ) + # Facet per port
@@ -353,7 +360,7 @@ shipment_event_plot <-
 	theme( axis.title.y = element_text( angle=90 ) )
 
 # Plot the data for only observed shipments at destination ports
-event_source_port_shipments_observed <-
+shipment_events_port_source_observed <-
 	event_tbl %>%
 	filter( detected_destination == 1 ) %>%
 	group_by( date, port_source ) %>%
@@ -363,8 +370,8 @@ event_source_port_shipments_observed <-
 	complete( date, port_source, fill=list( n=0 ) ) %>%
 	filter( !is.na( port_source ) ) 
 
-shipment_event_observed_plot <-
-	ggplot( event_source_port_shipments_observed ) +
+shipment_events_port_source_observed_plot <-
+	ggplot( shipment_events_port_source_observed ) +
 	geom_line( aes( x=date, y=n, colour=port_source ) ) +
 	scale_y_continuous( breaks=integer_breaks(), limits=c(0,NA) ) +	# Ensure integers on the y axis and include 0
 	facet_wrap( vars( port_source ), ncol=1, scales="fixed" ) + # Facet per port
@@ -374,16 +381,16 @@ shipment_event_observed_plot <-
 	theme( axis.title.y = element_text( angle=90 ) )
 
 # Combined version of the two datasets
-shipment_events_combined <-
-	event_source_port_shipments %>%
-	left_join( event_source_port_shipments_observed, by=c( "date", "port_source" ) ) %>% 
+shipment_events_port_source_combined <-
+	shipment_events_port_source %>%
+	left_join( shipment_events_port_source_observed, by=c( "date", "port_source" ) ) %>% 
 	rename( n = n.x, n_observed = n.y ) %>%
 	replace_na( list( n_observed=0 ) ) %>% # Replace missing observed values with 0
 	pivot_longer( cols=c( n, n_observed ), names_to="event_type" ) # Pivot to longer table for plotting
 
 # Plot the two series against each other
-shipment_events_combined_plot <-
-	ggplot( shipment_events_combined ) +
+shipment_events_port_source_combined_plot <-
+	ggplot( shipment_events_port_source_combined ) +
 	geom_line( aes( x=date, y=value, colour=event_type ) ) +
 	scale_colour_manual( values=c( weird_colours[["midnight blue"]], weird_colours[["carcosa yellow"]] ),
 							  	breaks=c( "n", "n_observed" ),
@@ -395,4 +402,8 @@ shipment_events_combined_plot <-
 	theme_weird() + 
 	theme( axis.title.y = element_text( angle=90 ) )
 
-
+# Save plots to output directory
+dir.create( "output", showWarnings = FALSE )
+ggsave( shipment_events_port_source_plot, file="output/shipment_events_port_source_plot.pdf", width=16, height=9 )
+ggsave( shipment_events_port_source_observed_plot, file="output/shipment_events_port_source_observed_plot.pdf", width=16, height=9 )
+ggsave( shipment_events_port_source_combined_plot, file="output/shipment_events_port_source_combined_plot.pdf", width=16, height=9 )
