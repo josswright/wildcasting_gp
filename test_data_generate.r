@@ -4,6 +4,10 @@ library( tidyverse )
 library( purrr )
 library( lubridate )
 
+library( extraDistr ) # Some useful extra probability distributions
+
+#library ( simts )	# Time series simulation
+
 library( cli ) # For message colouring and progress bars
 
 })
@@ -17,22 +21,30 @@ library( cli ) # For message colouring and progress bars
 # n_source			- Potential number of source products for each port
 # n_dest				- Potential number of destination products for each port
 
-n_ports <- 12
-n_products <- 12
-n_source <- 5
-n_dest <- 5
+n_ports <- 		12
+n_products <- 	12
+n_source <- 	5
+n_dest <- 		5
 
-# Shipment Parameters
-# p_shipment_size	- Size parameter for negative binomial shipment random draw. (rnbinom())
-# p_shipment_prob	- Probability parameter for negative binomial shipment random draw. (rnbinom())
-# p_ship_detect 	- Probability that a shipment is detected at source. 
-# p_dest_detect 	- Probability that a shipment is detected at destination.
+# Random parameters for generating ports and shipments
 
-p_shipment_size <- 0.04
-p_shipment_prob <- 0.2
+# p_detect_min 	- Define range of detection probabilities. (runif())
+# p_detect_max 	
+p_detect_min 		<- 0.01
+p_detect_max 		<- 0.1
 
-p_source_detect <- 0.05
-p_dest_detect <- 0.05
+# p_gen_size_scale 	- Sigma parameter for per-port randomisation of product size parameters (rnbinom)
+# p_gen_prob_alpha - Alpha parameter for per-port randomisation of product probability parameters (rbeta)
+# p_gen_prob_beta - Beta parameter for per-port randomisation of product probability parameters (rbeta)
+p_gen_size_alpha <- 1
+p_gen_size_beta <- 1
+p_gen_prob_alpha 	<- 2 
+p_gen_prob_beta 	<- 2
+
+# Dates of interest. (Irrelevant, really, but helps to work with dates.)
+date_list <-
+	seq( ymd( "1900-01-01" ), ymd("1900-12-31"), by="day" )
+
 
 # Attempt to clear the console. (There is no good way to do this cross-platform
 # for all environments, it seems, but this is fairly robust.)
@@ -54,8 +66,8 @@ message( paste( str_pad( paste( "  ", {col_yellow(symbol$bullet)},  "Ports:" ), 
 message( paste( str_pad( paste( "  ", {col_yellow(symbol$bullet)},  "Products:" ), msg_width, side="right" ), str_pad( n_products, value_width, side="left" ) ) )
 message( paste( str_pad( paste( "  ", {col_yellow(symbol$bullet)},  "Port production limit:" ), msg_width, side="right" ), str_pad( n_source, value_width, side="left" ) ) )
 message( paste( str_pad( paste( "  ", {col_yellow(symbol$bullet)},  "Port acceptance limit:" ), msg_width, side="right" ), str_pad( n_dest, value_width, side="left" ) ) )
-message( paste( str_pad( paste( "  ", {col_yellow(symbol$bullet)},  "Shipment size parameter:" ), msg_width, side="right" ), str_pad( p_shipment_size, value_width, side="left" ) ) )
-message( paste( str_pad( paste( "  ", {col_yellow(symbol$bullet)},  "Shipment probability parameter:" ), msg_width, side="right" ), str_pad( p_shipment_prob, value_width, side="left" ) ) )
+#message( paste( str_pad( paste( "  ", {col_yellow(symbol$bullet)},  "Shipment size parameter:" ), msg_width, side="right" ), str_pad( p_shipment_size, value_width, side="left" ) ) )
+#message( paste( str_pad( paste( "  ", {col_yellow(symbol$bullet)},  "Shipment probability parameter:" ), msg_width, side="right" ), str_pad( p_shipment_prob, value_width, side="left" ) ) )
 message( paste( str_pad( paste( "  ", {col_yellow(symbol$bullet)},  "Shipment source detection probability:" ), msg_width, side="right" ), str_pad( p_source_detect, value_width, side="left" ) ) )
 message( paste( str_pad( paste( "  ", {col_yellow(symbol$bullet)},  "Shipment destination detection probability:" ), msg_width, side="right" ), str_pad( p_dest_detect, value_width, side="left" ) ) )
 message( )
@@ -156,16 +168,28 @@ for( i in 1:n_ports ) {
 	dest_product_list <-
 		sample( product_list[ !product_list %in% source_product_list ], n_dest_actual )
 
+	# Create source detection probability. (Chance that a product shipment will be detected at this port.)
+	source_product_detection <- runif( 1, p_detect_min, p_detect_max )
+
 	# Generate table entries produced here
 	for( source_product in source_product_list ) {
+
+		# Generate random production parameters for this product.
+		p_gen_size <- rbeta( 1, p_gen_size_alpha, p_gen_size_beta ) / 10 
+		p_gen_prob <- rbeta( 1, p_gen_prob_alpha, p_gen_prob_beta ) / 10 
+
 		port_source_tbl <- 
-			bind_rows( port_source_tbl, tibble( name=name, product=source_product ) )
+			bind_rows( port_source_tbl, tibble( name=name, product=source_product, p_size=p_gen_size, p_prob=p_gen_prob, p_detect=source_product_detection ) )
 	}
 
 	# Generate table entries consumed here
 	for( dest_product in dest_product_list ) {
+
+		# Create destination detection probability. (Chance that a product arrival will be detected at this port.)
+		dest_product_detection <- runif( 1, p_detect_min, p_detect_max )
+
 		port_dest_tbl <- 
-			bind_rows( port_dest_tbl, tibble_row( name, product=dest_product ) )
+			bind_rows( port_dest_tbl, tibble_row( name, product=dest_product, p_detect=dest_product_detection ) )
 	}
 
 }
@@ -196,14 +220,16 @@ message()
 
 # Function to take a single source port entry row and generate a shipment
 # event, as described in the previous comment.
-generate_event <- function( name, product, probability, event_date, port_dest_tbl ) {
+generate_event <- function( name, product, p_size, p_prob, p_detect, event_date, port_dest_tbl ) {
 
 	# A row to store the event if it occurs
 	event_row <- NULL
 
+	event_name <- name
 	event_product <- product
 
-	event_shipment_count <- rnbinom( 1, size=p_shipment_size, prob=p_shipment_prob )
+	# Number of shipments
+	event_shipment_count <- rnbinom( 1, size=p_size, prob=p_prob )
 
 	# If the shipment occurred, work out the details.
 	if( event_shipment_count > 0 ) {
@@ -213,22 +239,23 @@ generate_event <- function( name, product, probability, event_date, port_dest_tb
 			port_dest_tbl %>%
 			filter( product == event_product ) %>%
 			sample_n( 1 ) %>%
-			pull( name )
+			select( name, p_detect )
 
 		# Calculate detection occurrence. Detection is only possible at destination if not detected at source.
 		detected_destination <- 0
-		detected_source <- rbinom( 1, size=1, prob=p_source_detect )
+		detected_source <- rbinom( 1, size=1, prob=p_detect )
+
 		if( detected_source==0 ) {
-			detected_destination <- rbinom( 1, size=1, prob=p_dest_detect )
+			detected_destination <- rbinom( 1, size=1, prob=event_destination$p_detect )
 		}
 
 		# Construct the result row
 		event_row <-
 			tibble_row( date=event_date, 
 						  	port_source=name,
-							port_destination=event_destination,
+							port_destination=event_destination$name,
 							product=product,
-							quantity=event_shipment_count,	# Fixed parameters for now. Should be defined in product tbl.
+							quantity=event_shipment_count,	
 							detected_source=detected_source,
 							detected_destination=detected_destination )
 
@@ -245,7 +272,8 @@ generate_day_events <- function( event_date, port_source_tbl, port_dest_tbl ) {
 
 	# Generate the day's events
 	day_events <-
-		pmap( port_source_tbl, generate_event, event_date=event_date, port_dest_tbl=port_dest_tbl ) %>%
+		pmap( port_source_tbl, generate_event, 
+			  	event_date=event_date, port_dest_tbl=port_dest_tbl ) %>%
 		bind_rows
 
 	return( day_events )
@@ -267,10 +295,6 @@ generate_day_events_progressive <-
 	return( day_events )
 
 }
-
-# The dates of interest
-date_list <-
-	seq( ymd( "1900-01-01" ), ymd("1900-12-31"), by="day" )
 
 # Suitably garish progress bar format
 options( cli.spinner = "moon",

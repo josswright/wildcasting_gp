@@ -1,19 +1,17 @@
 suppressPackageStartupMessages({
+	library( tidyverse )
+	library( purrr )
+	library( lubridate )
 
-library( tidyverse )
-library( purrr )
-library( lubridate )
+	library( showtext )
 
-library( showtext )
+	library( scales ) # Improve scales for output plot
 
-library( scales ) # Improve scales for output plot
+	library( gganimate ) # Animate time series plots
 
-library( gganimate ) # Animate time series plots
+	library( grimoire ) # devtools::install_github( "weirddatascience/grimoire" )
 
-library( grimoire ) # devtools::install_github( "weirddatascience/grimoire" )
-
-library( cli ) # For message colouring and progress bars
-
+	library( cli ) # For message colouring and progress bars
 })
 
 # Load the generated network data.
@@ -120,20 +118,20 @@ shipment_events_port_source_single <-
 	filter( port_source == head( port_list, 1 ) )
 
 # Example time series animation
-shipment_events_port_source_animation <-
-	ggplot( shipment_events_port_source_single ) +
-	geom_line( aes( x=date, y=n ), colour=weird_colours[["carcosa yellow"]] ) +
-	scale_y_continuous( breaks=integer_breaks(), limits=c(0,NA) ) +	# Ensure integers on the y axis and include 0
-	labs( x="Date", y="Shipment count", colour="Source Port" ) + 
-	ggtitle( "Generated Shipment Time Series" ) +
-	theme_weird() + 
-	theme( axis.title.y = element_text( angle=90 ) ) +
-	transition_reveal( date )
-
-animate( shipment_events_port_source_animation, 
-		  	width = 1200,
-		  	height = 720,
-		  	renderer = gifski_renderer( loop = FALSE ) )
+#shipment_events_port_source_animation <-
+#	ggplot( shipment_events_port_source_single ) +
+#	geom_line( aes( x=date, y=n ), colour=weird_colours[["carcosa yellow"]] ) +
+#	scale_y_continuous( breaks=integer_breaks(), limits=c(0,NA) ) +	# Ensure integers on the y axis and include 0
+#	labs( x="Date", y="Shipment count", colour="Source Port" ) + 
+#	ggtitle( "Generated Shipment Time Series" ) +
+#	theme_weird() + 
+#	theme( axis.title.y = element_text( angle=90 ) ) +
+#	transition_reveal( date )
+#
+#animate( shipment_events_port_source_animation, 
+#		  	width = 1200,
+#		  	height = 720,
+#		  	renderer = gifski_renderer( loop = FALSE ) )
 
 
 
