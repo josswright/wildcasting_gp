@@ -2,7 +2,8 @@ library( tidyverse )
 library( purrr )
 library( lubridate )
 
-# Generate a set of sporadic observations from a known underlying process.
+# Generate a set of sporadic observations for trade between randomised ports,
+# for various species, from a known underlying process.
 
 # Network Parameters
 # n_ports 			- Number of potential sites where seizure can be observed
@@ -37,19 +38,20 @@ generate_name <- function( components, entity_type ) {
 	suffix <- ""
 
 	# Species have a 30% chance of a prefix, but always a suffix.
-	# Ports have a 50% chance of having a suffix. Species always.
-	p_prefix <- ifelse( entity_type == "species", 70, 100 ) 
-	p_suffix <- ifelse( entity_type == "port", 50, 100 ) 
+	# Ports have a 50% chance of having a suffix. Species always have a suffix.
+	p_prefix <- ifelse( entity_type == "species", 0.7, 1 ) 
+	p_suffix <- ifelse( entity_type == "port", 0.5, 1 ) 
 
 	# Combine "prefix", "main", and "suffix"
 
 	# Random prefix, if required.
-	if( sample( 1:100, 1 ) <= p_prefix ) 
+	if( rbinom( 1, size=1, prob=p_prefix ) == 1 ) {
 		prefix <- 
 			components %>%
 			filter( ( type==entity_type ) & ( component=="prefix" ) ) %>%
 			sample_n( 1 ) %>%
 			pull( value )
+	}
 
 	# Random main
 	main <- 
@@ -59,13 +61,13 @@ generate_name <- function( components, entity_type ) {
 		pull( value )
 
 	# Random suffix, if required.
-	if( sample( 1:100, 1 ) <= p_suffix ) 
+	if( rbinom( 1, size=1, prob=p_suffix ) == 1 ) {
 		suffix <- 
 			components %>%
 			filter( ( type==entity_type ) & ( component=="suffix" ) ) %>%
 			sample_n( 1 ) %>%
 			pull( value )
-
+	}
 
 	# Combine components.
 	name <- str_trim( paste( prefix, main, suffix ) )
@@ -187,30 +189,36 @@ generate_event <- function( name, product, probability, event_date, port_dest_tb
 
 }
 
-# The dates of interest
-date_list <-
-	seq( ymd( "1900-01-01" ), ymd("1900-12-31"), by="day" )
-
-# Step through the dates and generate a tibble of trade events
-event_list <- NULL
-for( event_date in date_list ) {
+# Function to generate events for a single day
+generate_day_events <- function( event_date, port_source_tbl, port_dest_tbl ) {
 
 	event_date <- as.Date( event_date )
 
 	message( paste0( "Generating events for: ", event_date ) )
 
 	# Generate the day's events
-	daily_event <-
+	daily_events <-
 		pmap( port_source_tbl, generate_event, event_date=event_date, port_dest_tbl=port_dest_tbl ) %>%
 		bind_rows
 
-	# Add the day's events to the overall list
-	event_list <- 
-		event_list %>%
-		bind_rows( daily_event )
+	return( daily_events )
 
 }
 
-# Save the event list
+# The dates of interest
+date_list <-
+	seq( ymd( "1900-01-01" ), ymd("1900-12-31"), by="day" )
+
+# Step through the dates and generate a tibble of trade events
+event_list <-
+	map( date_list, generate_day_events, port_source_tbl, port_dest_tbl ) %>%
+	bind_rows
+
+# Save the port list, event list, and parameters
 dir.create( "work", showWarnings = FALSE )
-saveRDS( event_list, "work/event_list.rds" )
+
+wildcast_network <- 
+	list(	ports = 	port_tbl,
+		  	events = event_tbl )
+
+saveRDS( wildcast_network, "work/wildcast_network.rds" )
