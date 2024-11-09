@@ -1,6 +1,7 @@
 suppressPackageStartupMessages({
 	library( tidyverse )
 	library( purrr )
+	library( forcats )
 	library( lubridate )
 
 	library( showtext )
@@ -39,6 +40,12 @@ integer_breaks <- function( n = 5, ...) {
     return( breaks_floor )
 }
 
+# Shuffle factor order of port_source names, just to make the display order
+# less boringly alphabetic.
+event_tbl <-
+	event_tbl %>%
+	mutate( port_source = fct_shuffle( port_source ) ) 
+
 # Tally shipment counts (daily)
 # Use complete to ensure that there is an entry for each day for each port.
 shipment_events_port_source <-
@@ -49,6 +56,7 @@ shipment_events_port_source <-
 	complete( date=date_list ) %>%
 	complete( date, port_source, fill=list( n=0 ) ) %>%
 	filter( !is.na( port_source ) ) 
+
 
 # Plot the data for all shipments
 shipment_events_port_source_plot <-
@@ -93,14 +101,17 @@ shipment_events_port_source_combined <-
 # Plot the two series against each other
 shipment_events_port_source_combined_plot <-
 	ggplot( shipment_events_port_source_combined ) +
-	geom_line( aes( x=date, y=value, colour=event_type ) ) +
-	scale_colour_manual( values=c( weird_colours[["midnight blue"]], weird_colours[["carcosa yellow"]] ),
-							  	breaks=c( "n", "n_observed" ),
-								labels=c( "Shipment", "Observed Shipment" ) ) +
+	geom_line( 	data=shipment_events_port_source_combined %>% filter( event_type=="n" ), 
+				 		aes( x=date, y=value ), colour=weird_colours[["midnight blue"]] ) +
+	geom_line( 	data=shipment_events_port_source_combined %>% filter( event_type=="n_observed" ), 
+				 		aes( x=date, y=value, colour=port_source ) ) +
 	scale_y_continuous( breaks=integer_breaks(), limits=c(0,NA) ) +	# Ensure integers on the y axis and include 0
 	facet_wrap( vars( port_source ), ncol=1, scales="fixed" ) + # Facet per port
-	labs( x="Date", y="Shipment Count", colour="Source Port" ) + 
-	ggtitle( "Generated Shipment Time Series" ) +
+	labs( 	title="Combined Generated Shipment Time Series",
+			  	subtitle="Dark blue shows real shipment volume. Colours show observed shipments.",
+		  		x="Date", 
+				y="Shipment Count", 
+				colour="Source Port" ) + 
 	theme_weird() + 
 	theme( axis.title.y = element_text( angle=90 ) )
 
@@ -113,9 +124,9 @@ ggsave( shipment_events_port_source_combined_plot, file="output/shipment_events_
 # Animated version of time series events for single port
 
 # Choose a port and restrict to only that time series
-shipment_events_port_source_single <-
-	shipment_events_port_source %>%
-	filter( port_source == head( port_list, 1 ) )
+#shipment_events_port_source_single <-
+#	shipment_events_port_source %>%
+#	filter( port_source == head( port_list, 1 ) )
 
 # Example time series animation
 #shipment_events_port_source_animation <-

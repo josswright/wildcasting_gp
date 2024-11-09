@@ -41,10 +41,9 @@ p_gen_size_beta <- 1
 p_gen_prob_alpha 	<- 2 
 p_gen_prob_beta 	<- 2
 
-# Dates of interest. (Irrelevant, really, but helps to work with dates.)
+# Dates of interest. (Irrelevant, really, but it's intuitive to work with dates.)
 date_list <-
 	seq( ymd( "1900-01-01" ), ymd("1900-12-31"), by="day" )
-
 
 # Attempt to clear the console. (There is no good way to do this cross-platform
 # for all environments, it seems, but this is fairly robust.)
@@ -65,13 +64,8 @@ message( paste0( {col_green(symbol$play)},  "  Requested parameters:" ) )
 message( paste( str_pad( paste( "  ", {col_yellow(symbol$bullet)},  "Ports:" ), msg_width, side="right" ), str_pad( n_ports, value_width, side="left" ) ) )
 message( paste( str_pad( paste( "  ", {col_yellow(symbol$bullet)},  "Products:" ), msg_width, side="right" ), str_pad( n_products, value_width, side="left" ) ) )
 message( paste( str_pad( paste( "  ", {col_yellow(symbol$bullet)},  "Port production limit:" ), msg_width, side="right" ), str_pad( n_source, value_width, side="left" ) ) )
-message( paste( str_pad( paste( "  ", {col_yellow(symbol$bullet)},  "Port acceptance limit:" ), msg_width, side="right" ), str_pad( n_dest, value_width, side="left" ) ) )
-#message( paste( str_pad( paste( "  ", {col_yellow(symbol$bullet)},  "Shipment size parameter:" ), msg_width, side="right" ), str_pad( p_shipment_size, value_width, side="left" ) ) )
-#message( paste( str_pad( paste( "  ", {col_yellow(symbol$bullet)},  "Shipment probability parameter:" ), msg_width, side="right" ), str_pad( p_shipment_prob, value_width, side="left" ) ) )
-message( paste( str_pad( paste( "  ", {col_yellow(symbol$bullet)},  "Shipment source detection probability:" ), msg_width, side="right" ), str_pad( p_source_detect, value_width, side="left" ) ) )
-message( paste( str_pad( paste( "  ", {col_yellow(symbol$bullet)},  "Shipment destination detection probability:" ), msg_width, side="right" ), str_pad( p_dest_detect, value_width, side="left" ) ) )
-message( )
-
+message( paste( str_pad( paste( "  ", {col_yellow(symbol$bullet)},  "Port consumption limit:" ), msg_width, side="right" ), str_pad( n_dest, value_width, side="left" ) ) )
+message()
 
 # Randomly generate names for ports and products
 name_components <- read_csv( "data/name_components.csv", show_col_types=FALSE )

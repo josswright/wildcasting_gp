@@ -486,6 +486,17 @@
       ],
       "Hash": "3fd29944b231036ad67c3edb32e02201"
     },
+    "extraDistr": {
+      "Package": "extraDistr",
+      "Version": "1.10.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "R",
+        "Rcpp"
+      ],
+      "Hash": "49235792aad38657fffef40802f614c5"
+    },
     "fansi": {
       "Package": "fansi",
       "Version": "1.0.6",
