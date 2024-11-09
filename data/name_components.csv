@@ -180,72 +180,72 @@ port,suffix,Hill
 port,suffix,Valley
 port,suffix,Forest
 port,suffix,Woods
-species,prefix,Lesser
-species,prefix,Greater
-species,prefix,Dishevelled
-species,prefix,Shrivelled
-species,prefix,Foetid
-species,prefix,Distilled
-species,prefix,Preserved
-species,prefix,Fresh
-species,prefix,Writhing
-species,prefix,Forbidden
-species,prefix,Cursed
-species,prefix,Embalmed
-species,prefix,Gelatinous
-species,prefix,Crumbling
-species,prefix,Slimy
-species,prefix,Unctious
-species,prefix,Suspicious
-species,main,Byakhee
-species,main,Chthonian
-species,main,Sasquatch
-species,main,Chupacabra
-species,main,Bigfoot
-species,main,Yeti
-species,main,Pukwudgie
-species,main,Almasty
-species,main,Yowie
-species,main,Skunk Ape
-species,main,Cthulhi
-species,main,Dark Young
-species,main,Deep One
-species,main,Dhole
-species,main,Dimensional Shambler
-species,main,Elder Thing
-species,main,Fire Vampire
-species,main,Flying Polyp
-species,main,Formless Spawn
-species,main,Ghast
-species,main,Ghoul
-species,main,Gnophkeh
-species,main,Gug
-species,main,Hound of Tindalos
-species,main,Lloigor
-species,main,Many-Angled One
-species,main,Mi-Go
-species,main,Moon-Beast
-species,main,Night-Gaunt
-species,main,Rat-Thing
-species,main,Shantak
-species,main,Shoggoth
-species,main,Starspawn
-species,main,Star Vampire
-species,main,Tcho-Tcho
-species,main,Voormi
-species,main,Yugg
-species,main,Zoog
-species,suffix,Horn
-species,suffix,Wing
-species,suffix,Leg
-species,suffix,Tentacle
-species,suffix,Residue
-species,suffix,Polyp
-species,suffix,Essence
-species,suffix,Talons
-species,suffix,Dust
-species,suffix,Ichor
-species,suffix,Fossil
-species,suffix,Exoskeleton
-species,suffix,Pelt
-species,suffix,Fangs
+product,prefix,Lesser
+product,prefix,Greater
+product,prefix,Dishevelled
+product,prefix,Shrivelled
+product,prefix,Foetid
+product,prefix,Distilled
+product,prefix,Preserved
+product,prefix,Fresh
+product,prefix,Writhing
+product,prefix,Forbidden
+product,prefix,Cursed
+product,prefix,Embalmed
+product,prefix,Gelatinous
+product,prefix,Crumbling
+product,prefix,Slimy
+product,prefix,Unctious
+product,prefix,Suspicious
+product,main,Byakhee
+product,main,Chthonian
+product,main,Sasquatch
+product,main,Chupacabra
+product,main,Bigfoot
+product,main,Yeti
+product,main,Pukwudgie
+product,main,Almasty
+product,main,Yowie
+product,main,Skunk Ape
+product,main,Cthulhi
+product,main,Dark Young
+product,main,Deep One
+product,main,Dhole
+product,main,Dimensional Shambler
+product,main,Elder Thing
+product,main,Fire Vampire
+product,main,Flying Polyp
+product,main,Formless Spawn
+product,main,Ghast
+product,main,Ghoul
+product,main,Gnophkeh
+product,main,Gug
+product,main,Hound of Tindalos
+product,main,Lloigor
+product,main,Many-Angled One
+product,main,Mi-Go
+product,main,Moon-Beast
+product,main,Night-Gaunt
+product,main,Rat-Thing
+product,main,Shantak
+product,main,Shoggoth
+product,main,Starspawn
+product,main,Star Vampire
+product,main,Tcho-Tcho
+product,main,Voormi
+product,main,Yugg
+product,main,Zoog
+product,suffix,Horn
+product,suffix,Wing
+product,suffix,Leg
+product,suffix,Tentacle
+product,suffix,Residue
+product,suffix,Polyp
+product,suffix,Essence
+product,suffix,Talons
+product,suffix,Dust
+product,suffix,Ichor
+product,suffix,Fossil
+product,suffix,Exoskeleton
+product,suffix,Pelt
+product,suffix,Fangs

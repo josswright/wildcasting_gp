@@ -1,9 +1,17 @@
+suppressPackageStartupMessages({
+
 library( tidyverse )
 library( purrr )
 library( lubridate )
 
+library( grimoire ) # devtools::install_github( "weirddatascience/grimoire" )
+
+library( cli ) # For message colouring and progress bars
+
+})
+
 # Generate a set of sporadic observations for trade between randomised ports,
-# for various species, from a known underlying process.
+# for various products, from a known underlying process.
 
 # Network Parameters
 # n_ports 			- Number of potential sites where seizure can be observed
@@ -18,15 +26,43 @@ n_dest <- 5
 
 
 # Shipment Parameters
-# p_shipment		- Probability that a shipment happens on a given day for each source port/product.
+# p_shipment_size	- Size parameter for negative binomial shipment random draw. (rnbinom())
+# p_shipment_prob	- Probability parameter for negative binomial shipment random draw. (rnbinom())
 # p_ship_detect 	- Probability that a shipment is detected at source. 
 # p_dest_detect 	- Probability that a shipment is detected at destination.
 
-p_shipment <- 0.5
+p_shipment_size <- 0.2
+p_shipment_prob <- 0.8
+
 p_source_detect <- 0.05
 p_dest_detect <- 0.05
 
-# Randomly generate names for ports and species
+# Attempt to clear the console. (There is no good way to do this cross-platform
+# for all environments, it seems, but this is fairly robust.)
+if (Sys.info()["sysname"] == "Windows") {
+    # For Windows
+    shell("cls", intern = TRUE)
+} else {
+    # For Mac and Linux
+    cat("\033[2J\033[1;1H")
+}
+
+# Report start of processing
+message( col_blue( "Wildcasting Trade Network Simulator" ) )
+message( paste0( {col_green(symbol$play)},  "  Generating trade network and events." ) )
+message( paste0( {col_green(symbol$play)},  "  Requested parameters:" ) )
+message( paste0( "   ", {col_yellow(symbol$bullet)},  n_ports, " ports." ) )
+message( paste0( "   ", {col_yellow(symbol$bullet)},  n_ports, " products." ) )
+message( paste0( "   ", {col_yellow(symbol$bullet)},  "Up to ", n_source, " products produced at each port." ) )
+message( paste0( "   ", {col_yellow(symbol$bullet)},  "Up to ", n_dest, " products accepted at each port." ) )
+message( paste0( "   ", {col_yellow(symbol$bullet)},  "Size parameter for shipments: ", p_shipment_size ) )
+message( paste0( "   ", {col_yellow(symbol$bullet)},  "Probability parameter for shipments: ", p_shipment_prob ) )
+message( paste0( "   ", {col_yellow(symbol$bullet)},  "Probability of shipment detection at source: ", p_source_detect ) )
+message( paste0( "   ", {col_yellow(symbol$bullet)},  "Probability of shipment detection at destination: ", p_source_detect ) )
+message( )
+
+
+# Randomly generate names for ports and products
 name_components <- read_csv( "data/name_components.csv", show_col_types=FALSE )
 
 # Function to generate a name from name component dataset
@@ -39,7 +75,7 @@ generate_name <- function( components, entity_type ) {
 
 	# Species have a 30% chance of a prefix, but always a suffix.
 	# Ports have a 50% chance of having a suffix. Species always have a suffix.
-	p_prefix <- ifelse( entity_type == "species", 0.7, 1 ) 
+	p_prefix <- ifelse( entity_type == "product", 0.7, 1 ) 
 	p_suffix <- ifelse( entity_type == "port", 0.5, 1 ) 
 
 	# Combine "prefix", "main", and "suffix"
@@ -77,10 +113,14 @@ generate_name <- function( components, entity_type ) {
 
 }
 
-# Generate the list of species
+# Generate the list of products
 product_list <- c() 
 for( i in 1:n_products ) 
-	product_list <- c( product_list, generate_name( name_components, "species" ) )
+	product_list <- c( product_list, generate_name( name_components, "product" ) )
+
+message( paste0( {col_green(symbol$tick)},  "  Generated ", length( product_list ), " products: " ) )
+print( product_list )
+message( )
 
 # Randomly create a trade network.
 # Each port is randomly assigned:
@@ -141,6 +181,15 @@ port_dest_tbl <-
 	port_dest_tbl %>%
 	filter( product %in% port_source_tbl$product )
 
+# Report ports
+message( paste0( {col_green(symbol$tick)},  "  Generated ", n_ports, " ports: " ) )
+port_list <-
+	bind_rows( port_source_tbl, port_dest_tbl ) %>%
+	pull( name ) %>%
+	unique
+
+print( port_list )
+message()
 
 # Sample each source port at each day to create a time series of events, in the
 # following form: date, port_source, port_destination, product, quantity,
@@ -154,10 +203,11 @@ generate_event <- function( name, product, probability, event_date, port_dest_tb
 	event_row <- NULL
 
 	event_product <- product
-	event_probability <- 0.5
+
+	event_shipment_count <- rnbinom( 1, size=p_shipment_size, prob=p_shipment_prob )
 
 	# If the shipment occurred, work out the details.
-	if( rbinom( 1, size=1, prob=event_probability )==1 ) {
+	if( event_shipment_count > 0 ) {
 
 		# Filter the destination tibble only to those that accept this product, then randomly choose one.
 		event_destination <-
@@ -179,7 +229,7 @@ generate_event <- function( name, product, probability, event_date, port_dest_tb
 						  	port_source=name,
 							port_destination=event_destination,
 							product=product,
-							quantity=sample( 1:10, 1 ),		# Fixed for now. Should be defined in product tbl.
+							quantity=event_shipment_count,	# Fixed parameters for now. Should be defined in product tbl.
 							detected_source=detected_source,
 							detected_destination=detected_destination )
 
@@ -194,14 +244,28 @@ generate_day_events <- function( event_date, port_source_tbl, port_dest_tbl ) {
 
 	event_date <- as.Date( event_date )
 
-	message( paste0( "Generating events for: ", event_date ) )
-
 	# Generate the day's events
-	daily_events <-
+	day_events <-
 		pmap( port_source_tbl, generate_event, event_date=event_date, port_dest_tbl=port_dest_tbl ) %>%
 		bind_rows
 
-	return( daily_events )
+	return( day_events )
+
+}
+
+# Progress bar updating wrapper around the generate_day_events function
+generate_day_events_progressive <- 
+	function( event_date, port_source_tbl, port_dest_tbl, progress_bar ) {
+
+	day_events <- generate_day_events( event_date, port_source_tbl, port_dest_tbl )
+
+	# Update reporting variables
+	pb_date <- as.Date( event_date )
+	#pb_total_events <- pb_total_events + nrow( day_events )
+
+	cli_progress_update( id=progress_bar, force=TRUE )
+
+	return( day_events )
 
 }
 
@@ -209,16 +273,59 @@ generate_day_events <- function( event_date, port_source_tbl, port_dest_tbl ) {
 date_list <-
 	seq( ymd( "1900-01-01" ), ymd("1900-12-31"), by="day" )
 
+# Suitably garish progress bar format
+options( cli.spinner = "moon",
+		  	cli.progress_bar_style = "fillsquares",
+		  	cli.progress_show_after = 0 )
+
+progress_format <- 
+	paste0(	col_green("{pb_spin}"), "Generating events for ", 
+			 	col_blue( "{pb_date}" ), ": ", 
+				col_green("["), col_yellow("{pb_bar}"), col_green("]"),
+				" [{pb_current}/{pb_total}] ",
+				"ETA:", 
+				col_yellow( "{pb_eta}" )
+	)
+
+# Progress bar
+event_pb <- 
+	cli_progress_bar( format = progress_format,
+							clear = FALSE,
+							total = length( date_list ) )
+
 # Step through the dates and generate a tibble of trade events
-event_list <-
-	map( date_list, generate_day_events, port_source_tbl, port_dest_tbl ) %>%
-	bind_rows
+event_tbl <-
+	map( 	date_list, 
+		 	generate_day_events_progressive, port_source_tbl, port_dest_tbl,
+			progress_bar=event_pb ) %>%
+	list_rbind
+
+# Close the progress bar to avoid polluting the environment
+cli_progress_done()
+
+# Report completion.
+message( paste0( {col_green(symbol$tick)},  "  Generated ", nrow( event_tbl ), " events." ) )
 
 # Save the port list, event list, and parameters
 dir.create( "work", showWarnings = FALSE )
 
 wildcast_network <- 
-	list(	ports = 	port_tbl,
-		  	events = event_tbl )
+	list(	port_source = 	port_source_tbl,
+		  	port_dest 	= 	port_dest_tbl,
+		  	events 		= 	event_tbl )
 
 saveRDS( wildcast_network, "work/wildcast_network.rds" )
+
+# Create an example time series plot of shipments
+event_source_port_shipments <-
+	event_tbl %>%
+	group_by( date, port_source ) %>%
+	tally() 
+
+shipment_event_plot <-
+	ggplot( event_source_port_shipments ) +
+	geom_point( aes( x=date, y=n, colour=port_source ) ) +
+	labs( x="Date", y="Shipment count", colour="Source Port" ) +
+	ggtitle( "Generated Shipment Time Series" ) +
+	theme_weird() + 
+	theme( axis.title.y = element_text( angle=90 ) )
